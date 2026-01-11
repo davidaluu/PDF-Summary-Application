@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document Summarizer</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'SF Pro Display', -apple-system, system-ui, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 15s ease infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    top: -100px;
+    right: -100px;
+    border-radius: 50%;
+    animation: float 20s infinite ease-in-out;
+}
+
+body::after {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+    bottom: -80px;
+    left: -80px;
+    border-radius: 50%;
+    animation: float 25s infinite ease-in-out reverse;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(30px, 30px); }
+}
+
+.container {
+    background: white;
+    padding: 60px 50px;
+    border-radius: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02), 0 12px 40px rgba(0,0,0,0.08);
+    text-align: left;
+    width: 100%;
+    max-width: 560px;
+}
+
+h1 {
+    font-size: 36px;
+    color: #111;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.8px;
+}
+
+.desc {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 40px;
+    line-height: 1.5;
+}
+
+.upload-area {
+    border: 2px solid #e5e5e5;
+    border-radius: 16px;
+    padding: 40px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    margin-bottom: 28px;
+    background: #fafafa;
+}
+
+.upload-area:hover {
+    border-color: #007aff;
+    background: #f5f9ff;
+}
+
+.upload-area.active {
+    border-color: #007aff;
+    background: #f0f7ff;
+}
+
+.icon {
+    font-size: 56px;
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.upload-text {
+    font-size: 17px;
+    color: #333;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.upload-hint {
+    font-size: 14px;
+    color: #888;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.file-display {
+    display: none;
+    background: #f0f7ff;
+    border: 1px solid #c5dbf7;
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 28px;
+    text-align: left;
+}
+
+.file-display.show {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.file-name {
+    font-size: 14px;
+    color: #007aff;
+    font-weight: 500;
+    word-break: break-all;
+    flex: 1;
+}
+
+.file-size {
+    font-size: 13px;
+    color: #666;
+    white-space: nowrap;
+}
+
+button {
+    width: 100%;
+    padding: 18px;
+    font-size: 17px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    background: #007aff;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+button:hover {
+    background: #0051d5;
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.footer {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #eee;
+    text-align: center;
+}
+
+.features {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #666;
+}
+
+.feature-icon {
+    font-size: 16px;
+}
+
+.copyright {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #999;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 40px 30px;
+    }
+    
+    h1 {
+        font-size: 30px;
+    }
+    
+    .upload-area {
+        padding: 32px 24px;
+    }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>PDF Summarizer</h1>
+    <p class="desc">Upload any PDF and get a condensed version back. Same format, less pages, all the key points.</p>
+    
+    <form method="POST" enctype="multipart/form-data">
+        <label for="fileInput" class="upload-area" id="uploadZone">
+            <div class="icon">📎</div>
+            <div class="upload-text">Click to browse or drag PDF here</div>
+            <div class="upload-hint">Upload your PDF • Get summarized PDF back</div>
+        </label>
+        
+        <input type="file" name="document" accept="application/pdf" required id="fileInput">
+        
+        <div class="file-display" id="fileDisplay">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+        </div>
+        
+        <button type="submit">Create Summary PDF</button>
+    </form>
+    
+    <div class="footer">
+        <div class="features">
+            <div class="feature">
+                <span class="feature-icon">📄</span>
+                <span>PDF In, PDF Out</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">⚡</span>
+                <span>AI-Powered</span>
+            </div>
+        </div>
+        <div class="copyright">© 2026 David Aluu</div>
+    </div>
+</div>
+
+<script>
+const fileInput = document.getElementById('fileInput');
+const uploadZone = document.getElementById('uploadZone');
+const fileDisplay = document.getElementById('fileDisplay');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    else return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function handleFile(file) {
+    if (file) {
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileDisplay.classList.add('show');
+        uploadZone.classList.add('active');
+    }
+}
+
+fileInput.addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+    }
+});
+
+uploadZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    uploadZone.classList.add('active');
+});
+
+uploadZone.addEventListener('dragleave', function() {
+    if (!fileInput.files.length) {
+        uploadZone.classList.remove('active');
+    }
+});
+
+uploadZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    if (e.dataTransfer.files.length > 0) {
+        fileInput.files = e.dataTransfer.files;
+        handleFile(e.dataTransfer.files[0]);
+    }
+});
+</script>
+</body>
+</html>
