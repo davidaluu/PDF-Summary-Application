@@ -48,7 +48,7 @@ def pdf_to_text(file: UploadFile):
             text += page_text + "\n"
     return text
 
-def chunk_text(text, max_tokens=2000):
+def chunk_text(text, max_tokens=4000):
     chunk_size = max_tokens * 4  # approx 1 token ~ 4 chars
     return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
 
