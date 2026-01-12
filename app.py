@@ -130,7 +130,7 @@ async def upload(document: UploadFile = File(...), request: Request = None):
     summary = await summarize_text(text)
     pdf_file = create_summary_pdf(summary)
 
-    response = StreamingResponse(pdf_file, media_type="application/pdf")
+    response = StreamingResponse(pdf_file, media_type="octet-stream")
     response.headers["Content-Disposition"] = "attachment; filename=summary.pdf"
     if not request.cookies.get("user_id"):
         response.set_cookie("user_id", user_id)
