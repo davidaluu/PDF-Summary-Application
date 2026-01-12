@@ -1,4 +1,7 @@
-from flask import Flask, render_template, request, send_file
+from fastapi import FastAPI, File, UploadFile, Request, Response
+from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
 from openai import OpenAI
 import io
 import PyPDF2
@@ -10,20 +13,34 @@ from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 import os
 from reportlab.pdfbase.pdfmetrics import stringWidth
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+import secrets
+import asyncio
 
-# Initialize OpenAI client
+# Load OpenAI key
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
-app = Flask(__name__)
+app = FastAPI()
 
+# ----- CORS if needed -----
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# ----- PDF Handling -----
-def pdf_to_text(file):
-    reader = PyPDF2.PdfReader(file.stream)
+# ----- Templates folder -----
+templates = Jinja2Templates(directory="templates")
+
+# ----- Rate limiting storage (cookie-based) -----
+user_requests = {}  # user_id -> count
+MAX_REQUESTS_PER_DAY = 3
+
+# ----- Helpers -----
+def pdf_to_text(file: UploadFile):
+    reader = PyPDF2.PdfReader(file.file)
     text = ""
     for page in reader.pages:
         page_text = page.extract_text()
@@ -31,28 +48,11 @@ def pdf_to_text(file):
             text += page_text + "\n"
     return text
 
-# ----- Chunking -----
 def chunk_text(text, max_tokens=2000):
     chunk_size = max_tokens * 4  # approx 1 token ~ 4 chars
     return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
 
-# ----- OpenAI Summarization -----
-def summarize_chunk(chunk):
-    prompt = f"You are a document summarization assistant. You are receiving a portion of a larger document, and your task is to identify and extract the key points, main ideas, important information, critical data, statistics, findings, and conclusions from this section, then create a clear, concise summary that captures the essential content using professional language while maintaining the original meaning and focusing only on the content in this section, outputting only the summary text in paragraph form without any preamble, meta-commentary, or explanations. Word limit is 100 words\n{chunk}"
-    response = client.chat.completions.create(
-        model="gpt-5-nano",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response.choices[0].message.content
-
-def summarize_text(text):
-    chunks = chunk_text(text)
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        summaries = list(executor.map(summarize_chunk, chunks))
-    return "\n\n".join(summaries)
-
-# ----- PDF Generation with centered footer and page numbers -----
-def create_summary_pdf(summary):
+def create_summary_pdf(summary: str):
     pdf_buffer = io.BytesIO()
     c = canvas.Canvas(pdf_buffer, pagesize=LETTER)
     width, height = LETTER
@@ -79,31 +79,60 @@ def create_summary_pdf(summary):
             c.drawString(x, y, segment)
             y -= line_height
 
-    # Draw footer on last page
     draw_footer(page_number)
     c.save()
     pdf_buffer.seek(0)
     return pdf_buffer
 
+async def summarize_chunk(chunk: str):
+    prompt = (
+        f"You are a document summarization assistant. You are receiving a portion "
+        f"of a larger document, and your task is to identify and extract the key points, "
+        f"main ideas, important information, critical data, statistics, findings, "
+        f"and conclusions from this section, then create a clear, concise summary that "
+        f"captures the essential content using professional language while maintaining "
+        f"the original meaning and focusing only on the content in this section, "
+        f"outputting only the summary text in paragraph form without any preamble, "
+        f"meta-commentary, or explanations. Word limit is 100 words\n{chunk}"
+    )
+    loop = asyncio.get_running_loop()
+    response = await loop.run_in_executor(
+        None,
+        lambda: client.chat.completions.create(
+            model="gpt-5-nano",
+            messages=[{"role": "user", "content": prompt}]
+        )
+    )
+    return response.choices[0].message.content
+
+async def summarize_text(text: str):
+    chunks = chunk_text(text)
+    tasks = [summarize_chunk(c) for c in chunks]
+    summaries = await asyncio.gather(*tasks)
+    return "\n\n".join(summaries)
+
 # ----- Routes -----
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        file = request.files.get('document')
-        if file:
-            text = pdf_to_text(file)
-            summary = summarize_text(text)
-            pdf_file = create_summary_pdf(summary)
-            return send_file(
-                pdf_file,
-                as_attachment=True,
-                download_name="summary.pdf",
-                mimetype="application/pdf"
-            )
-    return render_template('index.html')
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
-# ----- Run App -----
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.post("/")
+async def upload(document: UploadFile = File(...), request: Request = None):
+    # Cookie-based rate limiting
+    user_id = request.cookies.get("user_id") or secrets.token_hex(8)
+    count = user_requests.get(user_id, 0)
+    if count >= MAX_REQUESTS_PER_DAY:
+        return Response("Rate limit exceeded", status_code=429)
+    user_requests[user_id] = count + 1
 
+    # Process PDF
+    text = pdf_to_text(document)
+    summary = await summarize_text(text)
+    pdf_file = create_summary_pdf(summary)
+
+    response = StreamingResponse(pdf_file, media_type="application/pdf")
+    response.headers["Content-Disposition"] = "attachment; filename=summary.pdf"
+    if not request.cookies.get("user_id"):
+        response.set_cookie("user_id", user_id)
+    return response
 

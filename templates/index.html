@@ -184,6 +184,14 @@ button:active {
     transform: translateY(0);
 }
 
+#spinner {
+    display: none;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: #007aff;
+}
+
 .footer {
     margin-top: 32px;
     padding-top: 24px;
@@ -238,6 +246,8 @@ button:active {
     <p class="desc">Upload any PDF and get a condensed version back. Same format, less pages, all the key points.</p>
     
     <form method="POST" enctype="multipart/form-data">
+        <div id="spinner">⏳ Processing... be checking download folder</div>
+
         <label for="fileInput" class="upload-area" id="uploadZone">
             <div class="icon">📎</div>
             <div class="upload-text">Click to browse or drag PDF here</div>
@@ -275,6 +285,8 @@ const uploadZone = document.getElementById('uploadZone');
 const fileDisplay = document.getElementById('fileDisplay');
 const fileName = document.getElementById('fileName');
 const fileSize = document.getElementById('fileSize');
+const spinner = document.getElementById('spinner');
+const form = document.querySelector('form');
 
 function formatFileSize(bytes) {
     if (bytes < 1024) return bytes + ' B';
@@ -314,6 +326,16 @@ uploadZone.addEventListener('drop', function(e) {
         fileInput.files = e.dataTransfer.files;
         handleFile(e.dataTransfer.files[0]);
     }
+});
+
+// Show spinner only if file is selected
+form.addEventListener('submit', function(e) {
+    if (!fileInput.files.length) {
+        e.preventDefault();
+        alert("Please upload a PDF first.");
+        return;
+    }
+    spinner.style.display = 'block';
 });
 </script>
 </body>
