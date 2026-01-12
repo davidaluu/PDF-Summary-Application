@@ -24,7 +24,7 @@ app = Flask(__name__)
 limiter = Limiter(
     app=app,                          # explicitly name the app
     key_func=get_remote_address,       # IP-based limit
-    default_limits=["3 per day"]       # Global: 3 requests per IP per day
+    default_limits=["50 per day"]       # Global: 3 requests per IP per day
 )
 
 # ----- PDF Handling -----
