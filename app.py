@@ -20,12 +20,6 @@ client = OpenAI(api_key=api_key)
 
 app = Flask(__name__)
 
-# ----- Global Rate Limiter -----
-limiter = Limiter(
-    app=app,                          # explicitly name the app
-    key_func=get_remote_address,       # IP-based limit
-    default_limits=["50 per day"]       # Global: 3 requests per IP per day
-)
 
 # ----- PDF Handling -----
 def pdf_to_text(file):
