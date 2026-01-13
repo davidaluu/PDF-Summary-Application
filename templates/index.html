@@ -15,49 +15,11 @@ body {
     font-family: 'SF Pro Display', -apple-system, system-ui, sans-serif;
     min-height: 100vh;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    background-size: 200% 200%;
-    animation: gradientShift 15s ease infinite;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    position: relative;
-    overflow: hidden;
-}
-
-body::before {
-    content: '';
-    position: absolute;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-    top: -100px;
-    right: -100px;
-    border-radius: 50%;
-    animation: float 20s infinite ease-in-out;
-}
-
-body::after {
-    content: '';
-    position: absolute;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
-    bottom: -80px;
-    left: -80px;
-    border-radius: 50%;
-    animation: float 25s infinite ease-in-out reverse;
-}
-
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-@keyframes float {
-    0%, 100% { transform: translate(0, 0); }
-    50% { transform: translate(30px, 30px); }
+    overflow: auto;
 }
 
 .container {
@@ -245,7 +207,7 @@ button:active {
     <h1>PDF Summarizer</h1>
     <p class="desc">Upload any PDF and get a condensed version back. Same format, less pages, all the key points.</p>
     
-    <form method="POST" enctype="multipart/form-data" target="_blank">
+    <form id="uploadForm">
         <div id="spinner">⏳ Processing... be checking download folder</div>
 
         <label for="fileInput" class="upload-area" id="uploadZone">
@@ -286,7 +248,7 @@ const fileDisplay = document.getElementById('fileDisplay');
 const fileName = document.getElementById('fileName');
 const fileSize = document.getElementById('fileSize');
 const spinner = document.getElementById('spinner');
-const form = document.querySelector('form');
+const form = document.getElementById('uploadForm');
 
 function formatFileSize(bytes) {
     if (bytes < 1024) return bytes + ' B';
@@ -328,14 +290,47 @@ uploadZone.addEventListener('drop', function(e) {
     }
 });
 
-// Show spinner only if file is selected
-form.addEventListener('submit', function(e) {
+// Fetch-based submission for mobile compatibility
+form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
     if (!fileInput.files.length) {
-        e.preventDefault();
         alert("Please upload a PDF first.");
         return;
     }
+    
     spinner.style.display = 'block';
+    
+    const formData = new FormData();
+    formData.append('document', fileInput.files[0]);
+    
+    try {
+        const response = await fetch('/', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'summary.pdf';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        spinner.style.display = 'none';
+        alert('PDF downloaded successfully!');
+        
+    } catch (error) {
+        spinner.style.display = 'none';
+        alert('Error: ' + error.message);
+    }
 });
 </script>
 </body>
