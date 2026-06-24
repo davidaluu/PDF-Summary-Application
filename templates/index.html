@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Document Summarizer</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
 * {
     margin: 0;
     padding: 0;
@@ -12,81 +14,110 @@
 }
 
 body {
-    font-family: 'SF Pro Display', -apple-system, system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
     min-height: 100vh;
-    background: linear-gradient(135deg, #5db6f1 0%, #6eb9eb 50%, #7fbdf1 100%);
+    background: #F1E9D8;
+    background-image:
+        radial-gradient(circle at 20% 20%, rgba(139, 90, 43, 0.05) 0%, transparent 45%),
+        radial-gradient(circle at 80% 80%, rgba(58, 42, 30, 0.04) 0%, transparent 45%);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
     overflow: auto;
+    color: #3A2A1E;
 }
 
 .container {
-    background: white;
-    padding: 60px 50px;
-    border-radius: 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02), 0 12px 40px rgba(0,0,0,0.08);
+    background: #FBF7EE;
+    padding: 56px 48px;
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(58,42,30,0.04), 0 16px 40px rgba(58,42,30,0.12);
     text-align: left;
     width: 100%;
-    max-width: 560px;
+    max-width: 540px;
+    border: 1px solid #E4D7B8;
+    position: relative;
+}
+
+.eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8B5A2B;
+    font-weight: 600;
+    margin-bottom: 14px;
 }
 
 h1 {
-    font-size: 36px;
-    color: #111;
+    font-family: 'Lora', serif;
+    font-size: 32px;
+    color: #3A2A1E;
     font-weight: 700;
-    margin-bottom: 8px;
-    letter-spacing: -0.8px;
+    margin-bottom: 10px;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
 }
 
 .desc {
-    color: #666;
-    font-size: 16px;
-    margin-bottom: 40px;
-    line-height: 1.5;
+    color: #6B5C47;
+    font-size: 15.5px;
+    margin-bottom: 36px;
+    line-height: 1.55;
 }
 
+/* ---- Upload zone: stitched mailbag style ---- */
 .upload-area {
-    border: 2px solid #e5e5e5;
-    border-radius: 16px;
-    padding: 40px 30px;
+    border: 2px dashed #A89172;
+    border-radius: 12px;
+    padding: 38px 28px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.25s ease;
-    margin-bottom: 28px;
-    background: #fafafa;
+    margin-bottom: 24px;
+    background:
+        repeating-linear-gradient(135deg, rgba(168,145,114,0.06) 0px, rgba(168,145,114,0.06) 2px, transparent 2px, transparent 10px),
+        #F6EFDE;
+    position: relative;
 }
 
 .upload-area:hover {
-    border-color: #007aff;
-    background: #f5f9ff;
+    border-color: #8B5A2B;
+    background-color: #F2E9D3;
 }
 
 .upload-area.active {
-    border-color: #007aff;
-    background: #f0f7ff;
+    border-color: #8B5A2B;
+    background-color: #EFE4C6;
+    transform: scale(1.01);
+    box-shadow: 0 0 0 4px rgba(139, 90, 43, 0.08);
 }
 
-.icon {
-    font-size: 56px;
-    margin-bottom: 20px;
-    opacity: 0.7;
+.upload-area.hidden {
+    display: none;
+}
+
+.icon-doc {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 18px;
+    color: #8B5A2B;
 }
 
 .upload-text {
-    font-size: 17px;
-    color: #333;
-    font-weight: 500;
+    font-size: 16px;
+    color: #3A2A1E;
+    font-weight: 600;
     margin-bottom: 6px;
+    font-family: 'Lora', serif;
 }
 
 .upload-hint {
-    font-size: 14px;
-    color: #888;
+    font-size: 13.5px;
+    color: #8C7A5E;
 }
 
 input[type="file"] {
@@ -95,11 +126,11 @@ input[type="file"] {
 
 .file-display {
     display: none;
-    background: #f0f7ff;
-    border: 1px solid #c5dbf7;
-    padding: 16px 20px;
-    border-radius: 12px;
-    margin-bottom: 28px;
+    background: #F2E9D3;
+    border: 1px solid #D8C79E;
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin-bottom: 24px;
     text-align: left;
 }
 
@@ -111,34 +142,35 @@ input[type="file"] {
 }
 
 .file-name {
-    font-size: 14px;
-    color: #007aff;
-    font-weight: 500;
+    font-size: 13.5px;
+    color: #8B5A2B;
+    font-weight: 600;
     word-break: break-all;
     flex: 1;
 }
 
 .file-size {
-    font-size: 13px;
-    color: #666;
+    font-size: 12.5px;
+    color: #8C7A5E;
     white-space: nowrap;
 }
 
 button {
     width: 100%;
-    padding: 18px;
-    font-size: 17px;
+    padding: 16px;
+    font-size: 16px;
     font-weight: 600;
     border: none;
-    border-radius: 12px;
-    background: #007aff;
-    color: white;
+    border-radius: 10px;
+    background: #8B5A2B;
+    color: #FBF7EE;
     cursor: pointer;
     transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
 }
 
 button:hover {
-    background: #0051d5;
+    background: #714722;
     transform: translateY(-1px);
 }
 
@@ -146,18 +178,241 @@ button:active {
     transform: translateY(0);
 }
 
-#spinner {
+button:disabled {
+    background: #C3AE89;
+    cursor: not-allowed;
+    transform: none;
+}
+
+button:focus-visible,
+.upload-area:focus-visible,
+.retry-link:focus-visible {
+    outline: 2px solid #8B5A2B;
+    outline-offset: 2px;
+}
+
+/* ---- Progress section ---- */
+#progressSection {
     display: none;
+    margin-bottom: 24px;
+}
+
+.progress-stages {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    position: relative;
+}
+
+.stage-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #EFE4C6;
+    border: 2px solid #D8C79E;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.stage-icon svg {
+    width: 16px;
+    height: 16px;
+    color: #A89172;
+    transition: color 0.3s ease;
+}
+
+.stage.active .stage-icon {
+    background: #8B5A2B;
+    border-color: #8B5A2B;
+    animation: pulse 1.4s ease-in-out infinite;
+}
+.stage.active .stage-icon svg { color: #FBF7EE; }
+
+.stage.done .stage-icon {
+    background: #6B7F5E;
+    border-color: #6B7F5E;
+}
+.stage.done .stage-icon svg { color: #FBF7EE; }
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(139,90,43,0.25); }
+    50% { box-shadow: 0 0 0 6px rgba(139,90,43,0.0); }
+}
+
+.stage-label {
+    font-size: 11px;
+    color: #8C7A5E;
+    font-weight: 500;
     text-align: center;
-    margin-bottom: 20px;
+}
+.stage.active .stage-label,
+.stage.done .stage-label {
+    color: #3A2A1E;
+    font-weight: 600;
+}
+
+.stage-line {
+    position: absolute;
+    top: 17px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: #D8C79E;
+    z-index: 1;
+}
+.stage:last-child .stage-line { display: none; }
+.stage.done .stage-line { background: #6B7F5E; }
+
+.progress-bar-track {
+    width: 100%;
+    height: 6px;
+    background: #E4D7B8;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: #8B5A2B;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.progress-status-text {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #8C7A5E;
+    text-align: center;
+    font-style: italic;
+}
+
+/* ---- Success box ---- */
+#successSection {
+    display: none;
+    background: #EEF1E8;
+    border: 1px solid #C2CDB4;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.success-check {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #6B7F5E;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+}
+
+.success-check svg {
+    width: 22px;
+    height: 22px;
+    color: #FBF7EE;
+}
+
+.success-title {
+    font-family: 'Lora', serif;
     font-size: 18px;
-    color: #007aff;
+    font-weight: 700;
+    color: #44523A;
+    margin-bottom: 6px;
+}
+
+.success-sub {
+    font-size: 13.5px;
+    color: #5F6E54;
+    margin-bottom: 18px;
+}
+
+/* Wax-seal style ID badge */
+.id-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #FBF7EE;
+    border: 1.5px dashed #A8B89A;
+    border-radius: 999px;
+    padding: 8px 16px;
+    margin-bottom: 16px;
+}
+
+.id-badge .seal {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #8B5A2B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #FBF7EE;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.id-badge .id-text {
+    font-family: 'Inter', monospace;
+    font-size: 13px;
+    color: #44523A;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.retry-link {
+    display: block;
+    font-size: 13px;
+    color: #5F7A4F;
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
+    margin: 0 auto;
+    font-family: 'Inter', sans-serif;
+}
+.retry-link:hover { color: #44523A; }
+
+/* ---- Error box ---- */
+#errorSection {
+    display: none;
+    background: #F7E9E5;
+    border: 1px solid #E0B5A8;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 24px;
+}
+
+.error-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #8A3A2A;
+    margin-bottom: 4px;
+}
+
+.error-text {
+    font-size: 13px;
+    color: #8A5A4D;
 }
 
 .footer {
     margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid #eee;
+    padding-top: 22px;
+    border-top: 1px solid #E4D7B8;
     text-align: center;
 }
 
@@ -165,7 +420,7 @@ button:active {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 24px;
+    gap: 22px;
     flex-wrap: wrap;
 }
 
@@ -173,67 +428,153 @@ button:active {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
-    color: #666;
+    font-size: 12.5px;
+    color: #8C7A5E;
 }
 
-.feature-icon {
-    font-size: 16px;
+.feature svg {
+    width: 14px;
+    height: 14px;
+    color: #A89172;
 }
 
 .copyright {
-    margin-top: 20px;
-    font-size: 13px;
-    color: #999;
+    margin-top: 18px;
+    font-size: 12px;
+    color: #B3A689;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .stage.active .stage-icon { animation: none; }
+    button:hover, .upload-area.active { transform: none; }
 }
 
 @media (max-width: 600px) {
     .container {
-        padding: 40px 30px;
+        padding: 36px 26px;
     }
-    
     h1 {
-        font-size: 30px;
+        font-size: 26px;
     }
-    
     .upload-area {
-        padding: 32px 24px;
+        padding: 30px 20px;
+    }
+    .progress-stages {
+        gap: 4px;
+    }
+    .stage-label {
+        font-size: 9.5px;
     }
 }
 </style>
 </head>
 <body>
 <div class="container">
-    <h1>PDF Summarizer Application</h1>
-    <p class="desc">Upload any PDF and get a condensed version back. Same format, less pages, all the key points.</p>
-    
-    <form id="uploadForm">
-        <div id="spinner">⏳ Processing....</div>
+    <div class="eyebrow">Document Summarizer</div>
+    <h1>Turn long PDFs into short ones</h1>
+    <p class="desc">Upload a PDF and get back a condensed version, same format, fewer pages, key points intact.</p>
 
-        <label for="fileInput" class="upload-area" id="uploadZone">
-            <div class="icon">📎</div>
+    <form id="uploadForm">
+        <label for="fileInput" class="upload-area" id="uploadZone" tabindex="0">
+            <svg class="icon-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+                <path d="M14 3v5h5"/>
+                <path d="M9 13h6M9 16.5h6M9 9.5h2"/>
+            </svg>
             <div class="upload-text">Click to browse or drag PDF here</div>
-            <div class="upload-hint">Upload your PDF • Get summarized PDF back</div>
+            <div class="upload-hint">Upload your PDF — get a summarized PDF back</div>
         </label>
-        
+
         <input type="file" name="document" accept="application/pdf" required id="fileInput">
-        
+
         <div class="file-display" id="fileDisplay">
             <div class="file-name" id="fileName"></div>
             <div class="file-size" id="fileSize"></div>
         </div>
-        
-        <button type="submit">Create Summary PDF</button>
+
+        <!-- Progress section -->
+        <div id="progressSection">
+            <div class="progress-stages">
+                <div class="stage" data-stage="uploading">
+                    <div class="stage-line"></div>
+                    <div class="stage-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 19V5M5 12l7-7 7 7"/>
+                        </svg>
+                    </div>
+                    <div class="stage-label">Uploading</div>
+                </div>
+                <div class="stage" data-stage="extracting">
+                    <div class="stage-line"></div>
+                    <div class="stage-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+                        </svg>
+                    </div>
+                    <div class="stage-label">Reading</div>
+                </div>
+                <div class="stage" data-stage="summarizing">
+                    <div class="stage-line"></div>
+                    <div class="stage-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L9 4 3 10l1.5 7.5L12 19"/>
+                        </svg>
+                    </div>
+                    <div class="stage-label">Summarizing</div>
+                </div>
+                <div class="stage" data-stage="done">
+                    <div class="stage-line"></div>
+                    <div class="stage-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 6L9 17l-5-5"/>
+                        </svg>
+                    </div>
+                    <div class="stage-label">Done</div>
+                </div>
+            </div>
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-status-text" id="progressStatusText">Starting…</div>
+        </div>
+
+        <!-- Success box -->
+        <div id="successSection">
+            <div class="success-check">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M20 6L9 17l-5-5"/>
+                </svg>
+            </div>
+            <div class="success-title">Your summary is ready</div>
+            <div class="success-sub">The download should start automatically.</div>
+            <div class="id-badge">
+                <span class="seal">ID</span>
+                <span class="id-text" id="docIdText"></span>
+            </div>
+            <button type="button" class="retry-link" id="retryDownloadLink">Download didn't start? Click here</button>
+        </div>
+
+        <!-- Error box -->
+        <div id="errorSection">
+            <div class="error-title">Something went wrong</div>
+            <div class="error-text" id="errorText">Please try again.</div>
+        </div>
+
+        <button type="submit" id="submitBtn">Create Summary PDF</button>
     </form>
-    
+
     <div class="footer">
         <div class="features">
             <div class="feature">
-                <span class="feature-icon">📄</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+                </svg>
                 <span>PDF In, PDF Out</span>
             </div>
             <div class="feature">
-                <span class="feature-icon">⚡</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
+                </svg>
                 <span>AI-Powered</span>
             </div>
         </div>
@@ -247,13 +588,43 @@ const uploadZone = document.getElementById('uploadZone');
 const fileDisplay = document.getElementById('fileDisplay');
 const fileName = document.getElementById('fileName');
 const fileSize = document.getElementById('fileSize');
-const spinner = document.getElementById('spinner');
 const form = document.getElementById('uploadForm');
+const submitBtn = document.getElementById('submitBtn');
+
+const progressSection = document.getElementById('progressSection');
+const progressFill = document.getElementById('progressFill');
+const progressStatusText = document.getElementById('progressStatusText');
+const successSection = document.getElementById('successSection');
+const errorSection = document.getElementById('errorSection');
+const errorText = document.getElementById('errorText');
+const docIdText = document.getElementById('docIdText');
+const retryDownloadLink = document.getElementById('retryDownloadLink');
+
+const STAGE_ORDER = ['uploading', 'extracting', 'summarizing', 'done'];
+const STAGE_MESSAGES = {
+    uploading: 'Uploading your document…',
+    extracting: 'Reading the document…',
+    summarizing: 'Summarizing the content…',
+    done: 'All done!'
+};
+
+let lastDownloadUrl = null;
+let lastDownloadName = null;
 
 function formatFileSize(bytes) {
     if (bytes < 1024) return bytes + ' B';
     else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
     else return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+// Simple unique ID generator (client-side, cosmetic display only)
+function generateDocId() {
+    const chars = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    let id = '';
+    for (let i = 0; i < 8; i++) {
+        id += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return id.slice(0, 4) + '-' + id.slice(4);
 }
 
 function handleFile(file) {
@@ -268,6 +639,13 @@ function handleFile(file) {
 fileInput.addEventListener('change', function(e) {
     if (e.target.files.length > 0) {
         handleFile(e.target.files[0]);
+    }
+});
+
+uploadZone.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        fileInput.click();
     }
 });
 
@@ -290,46 +668,150 @@ uploadZone.addEventListener('drop', function(e) {
     }
 });
 
-// Fetch-based submission for mobile compatibility
+function setStage(stageName) {
+    const idx = STAGE_ORDER.indexOf(stageName);
+    document.querySelectorAll('.stage').forEach((el) => {
+        const elIdx = STAGE_ORDER.indexOf(el.dataset.stage);
+        el.classList.remove('active', 'done');
+        if (elIdx < idx) el.classList.add('done');
+        else if (elIdx === idx) el.classList.add('active');
+    });
+    const pct = ((idx + 1) / STAGE_ORDER.length) * 100;
+    progressFill.style.width = pct + '%';
+    progressStatusText.textContent = STAGE_MESSAGES[stageName] || 'Working…';
+}
+
+function resetUI() {
+    progressSection.style.display = 'none';
+    successSection.style.display = 'none';
+    errorSection.style.display = 'none';
+    uploadZone.classList.remove('hidden');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Create Summary PDF';
+    progressFill.style.width = '0%';
+    document.querySelectorAll('.stage').forEach((el) => el.classList.remove('active', 'done'));
+}
+
+function showError(message) {
+    progressSection.style.display = 'none';
+    errorSection.style.display = 'block';
+    errorText.textContent = message;
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Try again';
+}
+
+function triggerDownload(url, filename) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+retryDownloadLink.addEventListener('click', function() {
+    if (lastDownloadUrl) {
+        triggerDownload(lastDownloadUrl, lastDownloadName);
+    }
+});
+
+async function pollStatus(jobId, originalFilename, docId) {
+    const POLL_INTERVAL_MS = 900;
+    const MAX_ATTEMPTS = 200; // ~3 minutes safety cap
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        let res;
+        try {
+            res = await fetch('/status/' + jobId);
+        } catch (err) {
+            showError('Lost connection while checking progress. Please try again.');
+            return;
+        }
+
+        if (!res.ok) {
+            showError('Could not check progress. Please try again.');
+            return;
+        }
+
+        const data = await res.json();
+
+        if (data.stage === 'error') {
+            showError(data.message || 'Something went wrong while processing your file.');
+            return;
+        }
+
+        setStage(data.stage);
+
+        if (data.stage === 'done') {
+            try {
+                const downloadRes = await fetch('/download/' + jobId);
+                if (!downloadRes.ok) {
+                    showError('Your summary finished but the download failed. Please try again.');
+                    return;
+                }
+                const blob = await downloadRes.blob();
+                const url = window.URL.createObjectURL(blob);
+                const downloadName = originalFilename.replace(/\.pdf$/i, '') + '-summary.pdf';
+
+                lastDownloadUrl = url;
+                lastDownloadName = downloadName;
+
+                triggerDownload(url, downloadName);
+
+                progressSection.style.display = 'none';
+                successSection.style.display = 'block';
+                docIdText.textContent = docId;
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Summarize another PDF';
+            } catch (err) {
+                showError('Your summary finished but the download failed. Please try again.');
+            }
+            return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+    }
+
+    showError('This is taking longer than expected. Please try again.');
+}
+
 form.addEventListener('submit', async function(e) {
     e.preventDefault();
-    
+
     if (!fileInput.files.length) {
-        alert("Please upload a PDF first.");
+        showError('Please choose a PDF first.');
         return;
     }
-    
-    spinner.style.display = 'block';
-    
+
+    resetUI();
+    uploadZone.classList.add('hidden');
+    progressSection.style.display = 'block';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processing…';
+    setStage('uploading');
+
+    const docId = generateDocId();
+    const file = fileInput.files[0];
     const formData = new FormData();
-    formData.append('document', fileInput.files[0]);
-    
+    formData.append('document', file);
+
     try {
-        const response = await fetch('/', {
+        const uploadRes = await fetch('/upload', {
             method: 'POST',
             body: formData
         });
-        
-        if (!response.ok) {
-            throw new Error('Upload failed');
+
+        if (!uploadRes.ok) {
+            const err = await uploadRes.json().catch(() => ({}));
+            showError(err.detail || 'Upload failed. Please try again.');
+            return;
         }
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'summary.pdf';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        spinner.style.display = 'none';
-        alert('PDF downloaded successfully!');
-        
+
+        const { job_id } = await uploadRes.json();
+        await pollStatus(job_id, file.name, docId);
+
     } catch (error) {
-        spinner.style.display = 'none';
-        alert('Error: ' + error.message);
+        showError('Could not reach the server. Please check your connection and try again.');
     }
 });
 </script>
