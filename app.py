@@ -1,5 +1,5 @@
-from fastapi import FastAPI, File, UploadFile, Request, Response
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi import FastAPI, File, UploadFile, Request, Response, BackgroundTasks, HTTPException
+from fastapi.responses import StreamingResponse, HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from openai import OpenAI
@@ -9,12 +9,13 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import LETTER
 from reportlab.lib.units import inch
 import textwrap
-from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 import os
 from reportlab.pdfbase.pdfmetrics import stringWidth
 import secrets
 import asyncio
+import uuid
+import time
 
 # Load OpenAI key
 load_dotenv()
@@ -38,9 +39,24 @@ templates = Jinja2Templates(directory="templates")
 user_requests = {}  # user_id -> count
 MAX_REQUESTS_PER_DAY = 3
 
+# ----- In-memory job store for progress polling -----
+# job_id -> { "stage": str, "message": str, "pdf_bytes": bytes|None, "created_at": float }
+# Stages: "uploading" -> "extracting" -> "summarizing" -> "done"  (or "error")
+jobs = {}
+
+JOB_TTL_SECONDS = 30 * 60  # cleanup jobs older than 30 minutes
+
+
+def cleanup_old_jobs():
+    cutoff = time.time() - JOB_TTL_SECONDS
+    stale_ids = [jid for jid, job in jobs.items() if job["created_at"] < cutoff]
+    for jid in stale_ids:
+        jobs.pop(jid, None)
+
+
 # ----- Helpers -----
-def pdf_to_text(file: UploadFile):
-    reader = PyPDF2.PdfReader(file.file)
+def pdf_to_text(file_bytes: bytes):
+    reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
     text = ""
     for page in reader.pages:
         page_text = page.extract_text()
@@ -111,28 +127,85 @@ async def summarize_text(text: str):
     summaries = await asyncio.gather(*tasks)
     return "\n\n".join(summaries)
 
+
+async def process_job(job_id: str, file_bytes: bytes):
+    """Background task: runs the full pipeline, updating job stage as it goes."""
+    try:
+        jobs[job_id]["stage"] = "extracting"
+        text = pdf_to_text(file_bytes)
+
+        if not text.strip():
+            jobs[job_id]["stage"] = "error"
+            jobs[job_id]["message"] = "Couldn't read any text from that PDF. It may be scanned or image-only."
+            return
+
+        jobs[job_id]["stage"] = "summarizing"
+        summary = await summarize_text(text)
+
+        pdf_buffer = create_summary_pdf(summary)
+        jobs[job_id]["pdf_bytes"] = pdf_buffer.getvalue()
+        jobs[job_id]["stage"] = "done"
+
+    except Exception as exc:
+        jobs[job_id]["stage"] = "error"
+        jobs[job_id]["message"] = "Something went wrong while processing your document."
+
+
 # ----- Routes -----
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.post("/")
-async def upload(document: UploadFile = File(...), request: Request = None):
-    # Cookie-based rate limiting
+
+@app.post("/upload")
+async def upload(background_tasks: BackgroundTasks, document: UploadFile = File(...), request: Request = None):
+    cleanup_old_jobs()
+
+    # Cookie-based rate limiting (unchanged from original)
     user_id = request.cookies.get("user_id") or secrets.token_hex(8)
     count = user_requests.get(user_id, 0)
     if count >= MAX_REQUESTS_PER_DAY:
-        return Response("Rate limit exceeded", status_code=429)
+        raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
     user_requests[user_id] = count + 1
 
-    # Process PDF
-    text = pdf_to_text(document)
-    summary = await summarize_text(text)
-    pdf_file = create_summary_pdf(summary)
+    if document.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Please upload a PDF file.")
 
-    response = StreamingResponse(pdf_file, media_type="application/pdf")
-    response.headers["Content-Disposition"] = "attachment; filename=summary.pdf"
+    file_bytes = await document.read()
+
+    job_id = str(uuid.uuid4())
+    jobs[job_id] = {
+        "stage": "uploading",
+        "message": "",
+        "pdf_bytes": None,
+        "created_at": time.time(),
+    }
+
+    background_tasks.add_task(process_job, job_id, file_bytes)
+
+    response = JSONResponse({"job_id": job_id})
     if not request.cookies.get("user_id"):
         response.set_cookie("user_id", user_id)
     return response
 
+
+@app.get("/status/{job_id}")
+async def status(job_id: str):
+    job = jobs.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    return {"stage": job["stage"], "message": job.get("message", "")}
+
+
+@app.get("/download/{job_id}")
+async def download(job_id: str):
+    job = jobs.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    if job["stage"] != "done" or not job["pdf_bytes"]:
+        raise HTTPException(status_code=409, detail="This summary isn't ready yet.")
+
+    pdf_stream = io.BytesIO(job["pdf_bytes"])
+    response = StreamingResponse(pdf_stream, media_type="application/pdf")
+    response.headers["Content-Disposition"] = "attachment; filename=summary.pdf"
+    return response
