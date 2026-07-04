@@ -298,94 +298,103 @@ button:focus-visible,
     font-style: italic;
 }
 
-/* ---- Success box ---- */
-#successSection {
+/* ---- Preview section ---- */
+#previewSection {
     display: none;
-    background: #EEF1E8;
-    border: 1px solid #C2CDB4;
-    border-radius: 12px;
-    padding: 24px;
     margin-bottom: 24px;
-    text-align: center;
 }
 
-.success-check {
-    width: 44px;
-    height: 44px;
+.preview-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.preview-check {
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     background: #6B7F5E;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 14px;
-}
-
-.success-check svg {
-    width: 22px;
-    height: 22px;
-    color: #FBF7EE;
-}
-
-.success-title {
-    font-family: 'Lora', serif;
-    font-size: 18px;
-    font-weight: 700;
-    color: #44523A;
-    margin-bottom: 6px;
-}
-
-.success-sub {
-    font-size: 13.5px;
-    color: #5F6E54;
-    margin-bottom: 18px;
-}
-
-/* Wax-seal style ID badge */
-.id-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: #FBF7EE;
-    border: 1.5px dashed #A8B89A;
-    border-radius: 999px;
-    padding: 8px 16px;
-    margin-bottom: 16px;
-}
-
-.id-badge .seal {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #8B5A2B;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    color: #FBF7EE;
-    font-weight: 700;
     flex-shrink: 0;
 }
 
-.id-badge .id-text {
-    font-family: 'Inter', monospace;
-    font-size: 13px;
-    color: #44523A;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+.preview-check svg {
+    width: 15px;
+    height: 15px;
+    color: #FBF7EE;
 }
 
-.retry-link {
-    display: block;
-    font-size: 13px;
-    color: #5F7A4F;
-    text-decoration: underline;
-    cursor: pointer;
-    background: none;
-    border: none;
-    margin: 0 auto;
-    font-family: 'Inter', sans-serif;
+.preview-title {
+    font-family: 'Lora', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: #44523A;
 }
-.retry-link:hover { color: #44523A; }
+
+.preview-box {
+    background: #F6EFDE;
+    border: 1px solid #D8C79E;
+    border-radius: 10px;
+    padding: 18px;
+    max-height: 260px;
+    overflow-y: auto;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #3A2A1E;
+    white-space: pre-wrap;
+    margin-bottom: 18px;
+}
+
+.preview-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.preview-actions button {
+    flex: 1;
+    padding: 13px;
+    font-size: 14.5px;
+}
+
+.btn-secondary {
+    background: transparent;
+    color: #8A3A2A;
+    border: 1.5px solid #E0B5A8;
+}
+.btn-secondary:hover {
+    background: #F7E9E5;
+    color: #8A3A2A;
+    transform: translateY(-1px);
+}
+
+.btn-download {
+    background: #6B7F5E;
+}
+.btn-download:hover {
+    background: #566B49;
+}
+
+.btn-download.downloaded {
+    background: #566B49;
+}
+
+.download-confirm {
+    font-size: 12.5px;
+    color: #5F7A4F;
+    text-align: center;
+    margin-bottom: 10px;
+    font-weight: 600;
+    display: none;
+}
+
+.download-confirm.show {
+    display: block;
+}
 
 /* ---- Error box ---- */
 #errorSection {
@@ -465,6 +474,9 @@ button:focus-visible,
     .stage-label {
         font-size: 9.5px;
     }
+    .preview-actions {
+        flex-direction: column;
+    }
 }
 </style>
 </head>
@@ -538,20 +550,23 @@ button:focus-visible,
             <div class="progress-status-text" id="progressStatusText">Starting…</div>
         </div>
 
-        <!-- Success box -->
-        <div id="successSection">
-            <div class="success-check">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <path d="M20 6L9 17l-5-5"/>
-                </svg>
+        <!-- Preview section (shown instead of auto-download) -->
+        <div id="previewSection">
+            <div class="preview-header">
+                <div class="preview-check">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                </div>
+                <div class="preview-title">Your summary is ready</div>
             </div>
-            <div class="success-title">Your summary is ready</div>
-            <div class="success-sub">The download should start automatically.</div>
-            <div class="id-badge">
-                <span class="seal">ID</span>
-                <span class="id-text" id="docIdText"></span>
+            <div class="preview-box" id="previewText"></div>
+            <div class="download-confirm" id="downloadConfirm">Downloaded ✓</div>
+            <div class="preview-actions">
+                <button type="button" class="btn-secondary" id="rejectBtn">Reject</button>
+                <button type="button" class="btn-download" id="downloadBtn">Download</button>
             </div>
-            <button type="button" class="retry-link" id="retryDownloadLink">Download didn't start? Click here</button>
+            <button type="button" id="summarizeAnotherBtn">Summarize another PDF</button>
         </div>
 
         <!-- Error box -->
@@ -594,11 +609,14 @@ const submitBtn = document.getElementById('submitBtn');
 const progressSection = document.getElementById('progressSection');
 const progressFill = document.getElementById('progressFill');
 const progressStatusText = document.getElementById('progressStatusText');
-const successSection = document.getElementById('successSection');
+const previewSection = document.getElementById('previewSection');
+const previewText = document.getElementById('previewText');
+const downloadConfirm = document.getElementById('downloadConfirm');
+const rejectBtn = document.getElementById('rejectBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const summarizeAnotherBtn = document.getElementById('summarizeAnotherBtn');
 const errorSection = document.getElementById('errorSection');
 const errorText = document.getElementById('errorText');
-const docIdText = document.getElementById('docIdText');
-const retryDownloadLink = document.getElementById('retryDownloadLink');
 
 const STAGE_ORDER = ['uploading', 'extracting', 'summarizing', 'done'];
 const STAGE_MESSAGES = {
@@ -608,23 +626,13 @@ const STAGE_MESSAGES = {
     done: 'All done!'
 };
 
-let lastDownloadUrl = null;
-let lastDownloadName = null;
+let currentJobId = null;
+let currentOriginalFilename = null;
 
 function formatFileSize(bytes) {
     if (bytes < 1024) return bytes + ' B';
     else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
     else return (bytes / 1048576).toFixed(1) + ' MB';
-}
-
-// Simple unique ID generator (client-side, cosmetic display only)
-function generateDocId() {
-    const chars = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-    let id = '';
-    for (let i = 0; i < 8; i++) {
-        id += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return id.slice(0, 4) + '-' + id.slice(4);
 }
 
 function handleFile(file) {
@@ -681,22 +689,33 @@ function setStage(stageName) {
     progressStatusText.textContent = STAGE_MESSAGES[stageName] || 'Working…';
 }
 
+// Full reset back to the upload screen, ready for a new PDF
 function resetUI() {
     progressSection.style.display = 'none';
-    successSection.style.display = 'none';
+    previewSection.style.display = 'none';
     errorSection.style.display = 'none';
+    downloadConfirm.classList.remove('show');
+    downloadBtn.classList.remove('downloaded');
+    downloadBtn.textContent = 'Download';
     uploadZone.classList.remove('hidden');
+    fileDisplay.classList.remove('show');
+    fileInput.value = '';
     submitBtn.disabled = false;
     submitBtn.textContent = 'Create Summary PDF';
+    submitBtn.style.display = 'block';
     progressFill.style.width = '0%';
     document.querySelectorAll('.stage').forEach((el) => el.classList.remove('active', 'done'));
+    currentJobId = null;
+    currentOriginalFilename = null;
 }
 
 function showError(message) {
     progressSection.style.display = 'none';
+    previewSection.style.display = 'none';
     errorSection.style.display = 'block';
     errorText.textContent = message;
     submitBtn.disabled = false;
+    submitBtn.style.display = 'block';
     submitBtn.textContent = 'Try again';
 }
 
@@ -709,13 +728,49 @@ function triggerDownload(url, filename) {
     document.body.removeChild(a);
 }
 
-retryDownloadLink.addEventListener('click', function() {
-    if (lastDownloadUrl) {
-        triggerDownload(lastDownloadUrl, lastDownloadName);
+// Reject: discard result, go back to upload screen, no download happens
+rejectBtn.addEventListener('click', function() {
+    resetUI();
+});
+
+// Summarize another PDF: same as reject, full reset for a new file
+summarizeAnotherBtn.addEventListener('click', function() {
+    resetUI();
+});
+
+// Download: fetch the PDF and save it, keep the preview visible
+downloadBtn.addEventListener('click', async function() {
+    if (!currentJobId) return;
+
+    downloadBtn.disabled = true;
+    const originalLabel = downloadBtn.textContent;
+    downloadBtn.textContent = 'Downloading…';
+
+    try {
+        const downloadRes = await fetch('/download/' + currentJobId);
+        if (!downloadRes.ok) {
+            showError('The download failed. Please try again.');
+            return;
+        }
+        const blob = await downloadRes.blob();
+        const url = window.URL.createObjectURL(blob);
+        const downloadName = currentOriginalFilename.replace(/\.pdf$/i, '') + '-summary.pdf';
+
+        triggerDownload(url, downloadName);
+        window.URL.revokeObjectURL(url);
+
+        downloadConfirm.classList.add('show');
+        downloadBtn.classList.add('downloaded');
+        downloadBtn.textContent = 'Download again';
+    } catch (err) {
+        showError('The download failed. Please try again.');
+        return;
+    } finally {
+        downloadBtn.disabled = false;
     }
 });
 
-async function pollStatus(jobId, originalFilename, docId) {
+async function pollStatus(jobId, originalFilename) {
     const POLL_INTERVAL_MS = 900;
     const MAX_ATTEMPTS = 200; // ~3 minutes safety cap
 
@@ -744,27 +799,22 @@ async function pollStatus(jobId, originalFilename, docId) {
 
         if (data.stage === 'done') {
             try {
-                const downloadRes = await fetch('/download/' + jobId);
-                if (!downloadRes.ok) {
-                    showError('Your summary finished but the download failed. Please try again.');
+                const previewRes = await fetch('/preview/' + jobId);
+                if (!previewRes.ok) {
+                    showError('Your summary finished but the preview failed to load. Please try again.');
                     return;
                 }
-                const blob = await downloadRes.blob();
-                const url = window.URL.createObjectURL(blob);
-                const downloadName = originalFilename.replace(/\.pdf$/i, '') + '-summary.pdf';
+                const previewData = await previewRes.json();
 
-                lastDownloadUrl = url;
-                lastDownloadName = downloadName;
+                currentJobId = jobId;
+                currentOriginalFilename = originalFilename;
 
-                triggerDownload(url, downloadName);
-
+                previewText.textContent = previewData.summary;
                 progressSection.style.display = 'none';
-                successSection.style.display = 'block';
-                docIdText.textContent = docId;
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Summarize another PDF';
+                previewSection.style.display = 'block';
+                submitBtn.style.display = 'none';
             } catch (err) {
-                showError('Your summary finished but the download failed. Please try again.');
+                showError('Your summary finished but the preview failed to load. Please try again.');
             }
             return;
         }
@@ -787,10 +837,10 @@ form.addEventListener('submit', async function(e) {
     uploadZone.classList.add('hidden');
     progressSection.style.display = 'block';
     submitBtn.disabled = true;
+    submitBtn.style.display = 'block';
     submitBtn.textContent = 'Processing…';
     setStage('uploading');
 
-    const docId = generateDocId();
     const file = fileInput.files[0];
     const formData = new FormData();
     formData.append('document', file);
@@ -808,7 +858,7 @@ form.addEventListener('submit', async function(e) {
         }
 
         const { job_id } = await uploadRes.json();
-        await pollStatus(job_id, file.name, docId);
+        await pollStatus(job_id, file.name);
 
     } catch (error) {
         showError('Could not reach the server. Please check your connection and try again.');
