@@ -40,7 +40,7 @@ user_requests = {}  # user_id -> count
 MAX_REQUESTS_PER_DAY = 3
 
 # ----- In-memory job store for progress polling -----
-# job_id -> { "stage": str, "message": str, "summary": str|None, "pdf_bytes": bytes|None, "created_at": float }
+# job_id -> { "stage": str, "message": str, "pdf_bytes": bytes|None, "created_at": float }
 # Stages: "uploading" -> "extracting" -> "summarizing" -> "done"  (or "error")
 jobs = {}
 
@@ -142,8 +142,6 @@ async def process_job(job_id: str, file_bytes: bytes):
         jobs[job_id]["stage"] = "summarizing"
         summary = await summarize_text(text)
 
-        jobs[job_id]["summary"] = summary
-
         pdf_buffer = create_summary_pdf(summary)
         jobs[job_id]["pdf_bytes"] = pdf_buffer.getvalue()
         jobs[job_id]["stage"] = "done"
@@ -179,7 +177,6 @@ async def upload(background_tasks: BackgroundTasks, document: UploadFile = File(
     jobs[job_id] = {
         "stage": "uploading",
         "message": "",
-        "summary": None,
         "pdf_bytes": None,
         "created_at": time.time(),
     }
@@ -198,16 +195,6 @@ async def status(job_id: str):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found.")
     return {"stage": job["stage"], "message": job.get("message", "")}
-
-
-@app.get("/preview/{job_id}")
-async def preview(job_id: str):
-    job = jobs.get(job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found.")
-    if job["stage"] != "done" or not job.get("summary"):
-        raise HTTPException(status_code=409, detail="This summary isn't ready yet.")
-    return {"summary": job["summary"]}
 
 
 @app.get("/download/{job_id}")
