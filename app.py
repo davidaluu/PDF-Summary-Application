@@ -139,9 +139,13 @@ async def process_job(job_id: str, file_bytes: bytes):
             jobs[job_id]["message"] = "Couldn't read any text from that PDF. It may be scanned or image-only."
             return
 
+        # Keep extracted text around so we can re-summarize without re-parsing the PDF.
+        jobs[job_id]["text"] = text
+
         jobs[job_id]["stage"] = "summarizing"
         summary = await summarize_text(text)
 
+        jobs[job_id]["summary_text"] = summary
         pdf_buffer = create_summary_pdf(summary)
         jobs[job_id]["pdf_bytes"] = pdf_buffer.getvalue()
         jobs[job_id]["stage"] = "done"
@@ -149,6 +153,31 @@ async def process_job(job_id: str, file_bytes: bytes):
     except Exception as exc:
         jobs[job_id]["stage"] = "error"
         jobs[job_id]["message"] = "Something went wrong while processing your document."
+
+
+async def resummarize_job(job_id: str):
+    """Background task: re-runs summarization on already-extracted text."""
+    job = jobs.get(job_id)
+    if not job:
+        return
+    try:
+        text = job.get("text", "")
+        if not text.strip():
+            job["stage"] = "error"
+            job["message"] = "Couldn't read any text from that PDF. It may be scanned or image-only."
+            return
+
+        job["stage"] = "summarizing"
+        summary = await summarize_text(text)
+
+        job["summary_text"] = summary
+        pdf_buffer = create_summary_pdf(summary)
+        job["pdf_bytes"] = pdf_buffer.getvalue()
+        job["stage"] = "done"
+
+    except Exception as exc:
+        job["stage"] = "error"
+        job["message"] = "Something went wrong while re-summarizing your document."
 
 
 # ----- Routes -----
@@ -177,6 +206,8 @@ async def upload(background_tasks: BackgroundTasks, document: UploadFile = File(
     jobs[job_id] = {
         "stage": "uploading",
         "message": "",
+        "text": None,
+        "summary_text": None,
         "pdf_bytes": None,
         "created_at": time.time(),
     }
@@ -195,6 +226,50 @@ async def status(job_id: str):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found.")
     return {"stage": job["stage"], "message": job.get("message", "")}
+
+
+@app.get("/preview/{job_id}")
+async def preview(job_id: str):
+    job = jobs.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    if job["stage"] != "done" or not job.get("summary_text"):
+        raise HTTPException(status_code=409, detail="This summary isn't ready yet.")
+
+    words = job["summary_text"].split()
+    preview_word_limit = 300
+    preview_text = " ".join(words[:preview_word_limit])
+    truncated = len(words) > preview_word_limit
+
+    return {
+        "preview": preview_text,
+        "truncated": truncated,
+        "word_count": len(words),
+    }
+
+
+@app.post("/resummarize/{job_id}")
+async def resummarize(job_id: str, background_tasks: BackgroundTasks):
+    job = jobs.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    if job["stage"] not in ("done", "error"):
+        raise HTTPException(status_code=409, detail="This job is still processing.")
+
+    job["stage"] = "summarizing"
+    job["message"] = ""
+    job["summary_text"] = None
+    job["pdf_bytes"] = None
+
+    background_tasks.add_task(resummarize_job, job_id)
+
+    return {"job_id": job_id}
+
+
+@app.post("/reject/{job_id}")
+async def reject(job_id: str):
+    jobs.pop(job_id, None)
+    return {"status": "rejected"}
 
 
 @app.get("/download/{job_id}")
