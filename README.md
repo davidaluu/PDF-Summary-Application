@@ -17,7 +17,8 @@ An AI-powered tool that automatically summarizes PDF documents and exports the s
 ## How to use
 1. Upload your PDF file
 2. Wait for the AI to process and summarize
-3. Automatic download for the generated summary PDF
+3. Accept the summary
+4. Automatic download for the generated summary PDF
 
 ## Author
 David Aluu
